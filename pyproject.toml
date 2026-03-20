@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "service-mesh-cli"
+version = "1.0.0"
+description = "Service mesh configuration validator and traffic policy analyzer for Istio/Linkerd"
+requires-python = ">=3.9"
+dependencies = [
+    "click>=8.0.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+service-mesh-cli = "service_mesh_cli.cli:cli"
+
+[tool.setuptools.packages.find]
+include = ["service_mesh_cli*"]
