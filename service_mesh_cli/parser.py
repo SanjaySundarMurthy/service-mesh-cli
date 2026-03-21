@@ -15,6 +15,7 @@ KIND_MAP = {
     "Sidecar": ResourceKind.SIDECAR,
     "EnvoyFilter": ResourceKind.ENVOY_FILTER,
     "RequestAuthentication": ResourceKind.REQUEST_AUTHENTICATION,
+    "ServiceProfile": ResourceKind.SERVICE_PROFILE,
 }
 
 TLS_MAP = {
@@ -73,6 +74,10 @@ def parse_resources(yaml_content: str, provider: MeshProvider = MeshProvider.IST
             _parse_peer_auth(resource, spec)
         elif kind_str == "AuthorizationPolicy":
             _parse_auth_policy(resource, spec)
+        elif kind_str == "RequestAuthentication":
+            _parse_request_auth(resource, spec)
+        elif kind_str == "ServiceProfile":
+            _parse_service_profile(resource, spec)
         resources.append(resource)
     return resources
 
@@ -156,3 +161,33 @@ def _parse_auth_policy(resource: MeshResource, spec: dict):
         resource.labels["_permissive"] = "true"
     else:
         resource.labels["_has_rules"] = "true"
+
+
+def _parse_request_auth(resource: MeshResource, spec: dict):
+    """Parse RequestAuthentication — check for JWT rules."""
+    jwt_rules = spec.get("jwtRules", [])
+    if jwt_rules:
+        resource.labels["_has_jwt"] = "true"
+    else:
+        resource.labels["_no_jwt"] = "true"
+
+
+def _parse_service_profile(resource: MeshResource, spec: dict):
+    """Parse Linkerd ServiceProfile — extract retry budget and routes."""
+    retry_budget = spec.get("retryBudget", {})
+    if retry_budget:
+        resource.retry_policy = RetryPolicy(
+            attempts=int(retry_budget.get("retryRatio", 0.2) * 10),
+            per_try_timeout=retry_budget.get("ttl", "10s"),
+        )
+    routes = spec.get("routes", [])
+    for route in routes:
+        timeout = route.get("timeout", "")
+        if timeout:
+            resource.timeout = timeout
+        condition = route.get("condition", {})
+        resource.routes.append(TrafficRoute(
+            destination_host=condition.get("pathRegex", ""),
+            destination_port=0,
+            weight=100,
+        ))

@@ -1,7 +1,6 @@
 """Tests for mesh validator and parser."""
 from service_mesh_cli.models import (
-    MeshResource, ResourceKind, MeshProvider, TLSMode, Severity,
-    TrafficRoute, CircuitBreaker,
+    MeshResource, ResourceKind, TLSMode,
 )
 from service_mesh_cli.parser import parse_resources, parse_yaml
 from service_mesh_cli.analyzers.mesh_validator import validate_mesh
@@ -173,3 +172,126 @@ class TestMeshValidator:
         ]
         report = validate_mesh(resources)
         assert report.critical_count >= 1  # MESH-001 and MESH-007
+
+
+class TestParserExtended:
+    def test_parse_request_authentication(self):
+        yaml_content = """apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: jwt-auth
+  namespace: default
+spec:
+  jwtRules:
+  - issuer: https://auth.example.com
+    jwksUri: https://auth.example.com/.well-known/jwks.json
+"""
+        resources = parse_resources(yaml_content)
+        assert len(resources) == 1
+        assert resources[0].kind == ResourceKind.REQUEST_AUTHENTICATION
+        assert resources[0].labels.get("_has_jwt") == "true"
+
+    def test_parse_request_authentication_no_jwt(self):
+        yaml_content = """apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: empty-auth
+  namespace: default
+spec: {}
+"""
+        resources = parse_resources(yaml_content)
+        assert len(resources) == 1
+        assert resources[0].labels.get("_no_jwt") == "true"
+
+    def test_parse_service_profile(self):
+        yaml_content = """apiVersion: linkerd.io/v1alpha2
+kind: ServiceProfile
+metadata:
+  name: web-svc.default.svc.cluster.local
+  namespace: default
+spec:
+  retryBudget:
+    retryRatio: 0.2
+    minRetriesPerSecond: 10
+    ttl: 10s
+  routes:
+  - name: GET /api/v1/users
+    condition:
+      method: GET
+      pathRegex: /api/v1/users
+    timeout: 5s
+"""
+        resources = parse_resources(yaml_content)
+        assert len(resources) == 1
+        assert resources[0].kind == ResourceKind.SERVICE_PROFILE
+        assert resources[0].timeout == "5s"
+        assert len(resources[0].routes) == 1
+
+    def test_parse_linkerd_provider(self):
+        from service_mesh_cli.models import MeshProvider
+        yaml_content = """apiVersion: linkerd.io/v1alpha2
+kind: ServiceProfile
+metadata:
+  name: web-svc
+  namespace: default
+spec:
+  routes:
+  - name: GET /api
+    condition:
+      pathRegex: /api
+"""
+        resources = parse_resources(yaml_content, MeshProvider.LINKERD)
+        assert len(resources) == 1
+        assert resources[0].provider == MeshProvider.LINKERD
+
+    def test_parse_gateway_http_protocol(self):
+        yaml_content = """apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: http-gw
+  namespace: default
+spec:
+  servers:
+  - port:
+      number: 80
+      protocol: HTTP
+    hosts:
+    - "*.example.com"
+"""
+        resources = parse_resources(yaml_content)
+        assert len(resources) == 1
+        assert resources[0].tls_mode == TLSMode.DISABLE
+
+    def test_parse_destination_rule_load_balancer(self):
+        yaml_content = """apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: test-dr
+  namespace: default
+spec:
+  host: test-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+"""
+        from service_mesh_cli.models import LoadBalancerAlgorithm
+        resources = parse_resources(yaml_content)
+        assert len(resources) == 1
+        assert resources[0].load_balancer == LoadBalancerAlgorithm.LEAST_CONN
+
+    def test_parse_auth_policy_with_rules(self):
+        yaml_content = """apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: strict-auth
+  namespace: default
+spec:
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/default/sa/web"]
+"""
+        resources = parse_resources(yaml_content)
+        assert len(resources) == 1
+        assert resources[0].labels.get("_has_rules") == "true"
+        assert resources[0].labels.get("_permissive") is None

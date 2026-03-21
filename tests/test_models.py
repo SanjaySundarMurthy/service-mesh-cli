@@ -2,7 +2,7 @@
 from service_mesh_cli.models import (
     MeshResource, ResourceKind, MeshProvider, TLSMode, Severity,
     MeshReport, Finding, TrafficRoute, RetryPolicy, CircuitBreaker,
-    LoadBalancerAlgorithm, TrafficProtocol, MESH_RULES,
+    MESH_RULES,
 )
 
 

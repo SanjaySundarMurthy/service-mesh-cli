@@ -1,9 +1,9 @@
 """Shared test fixtures for service-mesh-cli."""
 import pytest
 from service_mesh_cli.models import (
-    MeshResource, ResourceKind, MeshProvider, TLSMode, Severity,
-    TrafficRoute, RetryPolicy, CircuitBreaker, LoadBalancerAlgorithm,
-    TrafficProtocol, MeshReport, Finding,
+    MeshResource, ResourceKind, TLSMode,
+    TrafficRoute, RetryPolicy, CircuitBreaker,
+    TrafficProtocol,
 )
 
 

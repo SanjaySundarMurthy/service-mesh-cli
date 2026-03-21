@@ -28,7 +28,7 @@ class ResourceKind(str, Enum):
     SIDECAR = "Sidecar"
     ENVOY_FILTER = "EnvoyFilter"
     REQUEST_AUTHENTICATION = "RequestAuthentication"
-    TRAFFIC_POLICY = "TrafficPolicy"
+    SERVICE_PROFILE = "ServiceProfile"
 
 
 class TrafficProtocol(str, Enum):

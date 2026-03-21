@@ -1,6 +1,6 @@
 """Mesh configuration validator — applies MESH-001 to MESH-010 rules."""
 from ..models import (
-    MeshResource, MeshReport, Finding, Severity, ResourceKind,
+    MeshResource, MeshReport, Finding, ResourceKind,
     TLSMode, MESH_RULES, MeshProvider,
 )
 
