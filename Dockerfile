@@ -7,7 +7,7 @@ RUN pip install --no-cache-dir build && python -m build
 FROM python:3.12-slim
 
 LABEL maintainer="ssan" \
-      org.opencontainers.image.source="https://github.com/ssan/service-mesh-cli" \
+      org.opencontainers.image.source="https://github.com/SanjaySundarMurthy/service-mesh-cli" \
       org.opencontainers.image.description="service-mesh-cli - DevOps CLI Tool"
 
 RUN groupadd -r appuser && useradd -r -g appuser appuser
