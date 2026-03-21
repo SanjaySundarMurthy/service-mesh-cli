@@ -1,7 +1,7 @@
 """Data models for service mesh configuration analysis."""
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
 
 
 class MeshProvider(str, Enum):
@@ -95,8 +95,8 @@ class MeshResource:
     tls_mode: TLSMode = TLSMode.DISABLE
     protocol: TrafficProtocol = TrafficProtocol.HTTP
     routes: list[TrafficRoute] = field(default_factory=list)
-    retry_policy: RetryPolicy | None = None
-    circuit_breaker: CircuitBreaker | None = None
+    retry_policy: Optional[RetryPolicy] = None
+    circuit_breaker: Optional[CircuitBreaker] = None
     load_balancer: LoadBalancerAlgorithm = LoadBalancerAlgorithm.ROUND_ROBIN
     timeout: str = ""
     labels: dict[str, str] = field(default_factory=dict)

@@ -1,7 +1,10 @@
 """Rich terminal reporter for mesh validation results."""
+from typing import Optional
+
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
+
 from ..models import MeshReport, Severity
 
 SEVERITY_COLORS = {
@@ -13,7 +16,7 @@ SEVERITY_COLORS = {
 }
 
 
-def print_report(report: MeshReport, console: Console | None = None):
+def print_report(report: MeshReport, console: Optional[Console] = None):
     console = console or Console()
     grade_color = {"A": "green", "B": "blue", "C": "yellow", "D": "red", "F": "red bold"}.get(report.grade, "white")
     console.print(Panel(
